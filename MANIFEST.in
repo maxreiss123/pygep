@@ -1,0 +1,10 @@
+include README.md
+include LICENSE
+include setup_julia.py
+recursive-include pygep *.py
+recursive-include pygep/julia_env *.toml
+recursive-include examples *.py
+global-exclude *.pyc
+global-exclude __pycache__
+global-exclude *.egg-info
+
