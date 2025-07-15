@@ -1,0 +1,9 @@
+{
+  "julia": "1.6",
+  "packages": {
+    "GeneExpressionProgramming": {
+      "uuid": "2f0a5bb0-5f4f-4f7f-b515-93a1e67611af",
+	    "url": "https://github.com/maxreiss123/GeneExpressionProgramming.jl"
+    }
+  }
+}
