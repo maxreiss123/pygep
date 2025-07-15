@@ -25,7 +25,8 @@ classifiers = [
 requires-python = ">=3.8"
 dependencies = [
     "numpy>=1.20.0",
-    "julia>=0.6.0",
+    "juliacall>=0.9.0",
+    "juliapkg>=0.1.0",
 ]
 
 [project.optional-dependencies]
@@ -49,5 +50,4 @@ where = ["."]
 include = ["pygep*"]
 
 [tool.setuptools.package-data]
-pygep = ["julia_env/*"]
-
+pygep = ["julia_env/*", "juliapkg.json"]

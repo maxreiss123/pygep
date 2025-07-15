@@ -5,6 +5,8 @@ Interface for GEP Regressor
 import numpy as np
 from typing import Optional, Dict, Any, List
 from .julia_interface import JuliaGepRegressor, JuliaGepTensorRegressor
+import os
+
 
 class GepRegressor:
     """
@@ -30,6 +32,7 @@ class GepRegressor:
             - rounds : int, optional
                 Tree height rounds (default: 7)
         """
+
         self.number_features = number_features
         self._julia_regressor = JuliaGepRegressor(number_features, **kwargs)
         self._fitted = False
@@ -145,13 +148,11 @@ class GepRegressor:
         history : dict
             Dictionary with 'train_loss' key containing fitness values over epochs
         """
-        # This would require additional Julia code to track fitness history
         if not self._fitted:
             raise RuntimeError("Regressor must be fitted before accessing fitness history")
         
-        # Placeholder
-        print("Not implemented by now")
-        return []
+        # TODO: Implement by tracking in Julia (e.g., expose history from GepRegressor)
+        raise NotImplementedError("Fitness history tracking not yet implemented")
 
 class GepTensorRegressor:
     """
@@ -187,28 +188,60 @@ class GepTensorRegressor:
         )
         self._fitted = False
     
-    def fit(self, loss_function, epochs: int = 100, population_size: int = 1000) -> 'GepTensorRegressor':
+    def fit(self, X: np.ndarray, y: np.ndarray, epochs: int = 1000, 
+            population_size: int = 1000, loss_function: str = "mse",
+            X_test: Optional[np.ndarray] = None, y_test: Optional[np.ndarray] = None,
+            target_dimension: Optional[List] = None, **kwargs) -> 'GepRegressor':
         """
-        Fit the tensor regressor with a custom loss function.
+        Fit the GEP regressor to training data.
         
         Parameters:
         -----------
-        loss_function : callable
-            Custom loss function (must be defined in Julia)
-        epochs : int, default=100
+        X : np.ndarray, shape (n_samples, n_features)
+            Training input data
+        y : np.ndarray, shape (n_samples,)
+            Training target values
+        epochs : int, default=1000
             Number of evolution epochs
         population_size : int, default=1000
             Size of the population
+        loss_function : str, default="mse"
+            Loss function to use ("mse", "mae", etc.)
+        X_test : np.ndarray, optional
+            Test input data for validation
+        y_test : np.ndarray, optional
+            Test target values for validation
+        target_dimension : list, optional
+            Target physical dimension for physics-aware regression
+        **kwargs : dict
+            Additional arguments passed to Julia fit! function
             
         Returns:
         --------
-        self : GepTensorRegressor
+        self : GepRegressor
             Fitted regressor
         """
-        self._julia_regressor.fit(loss_function, epochs=epochs, population_size=population_size)
+        # Validate inputs
+        X = np.asarray(X)
+        y = np.asarray(y)
+        
+        if X.shape[1] != self.number_features:
+            raise ValueError(f"X must have {self.number_features} features, got {X.shape[1]}")
+        
+        if X.shape[0] != y.shape[0]:
+            raise ValueError(f"X and y must have same number of samples")
+        
+        # Call Julia fit function
+        self._julia_regressor.fit(
+            X, y, epochs=epochs, population_size=population_size,
+            loss_function=loss_function, X_test=X_test, y_test=y_test,
+            target_dimension=target_dimension, **kwargs
+        )
+        
         self._fitted = True
         return self
-    
+
+
     @property
     def best_expression_(self) -> str:
         """Get the best tensor expression found"""
@@ -217,13 +250,10 @@ class GepTensorRegressor:
     @property
     def best_fitness_(self) -> float:
         """Get the fitness of the best expression"""
-        if not self._fitted:
-            raise RuntimeError("Regressor must be fitted before accessing best fitness")
-        return Inf
+        return self._julia_regressor.best_fitness_
     
     def get_best_models(self, n: int = 1) -> List[Dict[str, Any]]:
         """Get the n best tensor models"""
         if not self._fitted:
             raise RuntimeError("Regressor must be fitted before accessing best models")
-        return [{"expression": self.best_expression_, "fitness": self.best_fitness_}]
-
+        return [{"expression": self.best_expression_, "fitness": self.best_fitness_} for _ in range(n)]

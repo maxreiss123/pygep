@@ -19,11 +19,17 @@ First, install Julia from [https://julialang.org/downloads/](https://julialang.o
 
 ### 2. Install PyGEP
 ```bash
-pip install pygep-0.1.0-py3-none-any.whl
-python-jl
+cd pygep
+pip install .
 ```
 
 ### 3. Install Julia Dependencies
+```bash
+pygep-setup
+```
+
+or
+
 ```python
 import pygep
 pygep.install_julia_dependencies()
